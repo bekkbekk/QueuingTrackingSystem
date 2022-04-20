@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "480821155950",
+    "project_id": "queing-73c0f",
+    "storage_bucket": "queing-73c0f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480821155950:android:1380e4bc45ba37ab4f2e7f",
+        "android_client_info": {
+          "package_name": "com.bekk.queuingtrackingsystem"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "480821155950-fpgnlh1lpu1cms8gfcc55rg0ei6r608u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbRzUmCwwWPjrWOsh64HILGeYjPme8GVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "480821155950-fpgnlh1lpu1cms8gfcc55rg0ei6r608u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
