@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Html
+import android.util.Log
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
@@ -12,6 +13,8 @@ import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_host_room.*
 
 class HostRoomActivity : AppCompatActivity() {
+
+    private val TAG = "HostRoomActivity"
 
     lateinit var customerList: MutableList<Int>
 
@@ -37,6 +40,7 @@ class HostRoomActivity : AppCompatActivity() {
 
 
         code = intent.getStringExtra("code").toString()
+        Log.d(TAG, code)
 
         email = fAuth.currentUser?.email.toString()
 
@@ -65,7 +69,7 @@ class HostRoomActivity : AppCompatActivity() {
 
             loadingDialog.start()
 
-            fDbRef.child("generated_codes").child(code!!).removeValue().addOnCompleteListener{ task ->
+            fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid).removeValue().addOnCompleteListener{ task ->
 
                 if (task.isSuccessful){
                     fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid).removeValue().addOnSuccessListener {

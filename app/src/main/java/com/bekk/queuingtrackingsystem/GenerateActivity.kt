@@ -165,7 +165,7 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
                             startActivity(i)
 
                             // upload generated code to database
-                            fDbRef.child("generated_codes").child(code!!).push()
+                            fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid).push()
                                 .setValue(Host(email, code!!))
                             fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid)
                                 .push().setValue(email).addOnCompleteListener{

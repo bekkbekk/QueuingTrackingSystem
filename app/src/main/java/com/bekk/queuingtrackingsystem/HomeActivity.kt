@@ -23,6 +23,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var email : String
     private lateinit var loadingDialog : LoadingDialog
     private var activeRoom = false
+    private lateinit var code : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +41,6 @@ class HomeActivity : AppCompatActivity() {
 
         loadingDialog.start()
 
-        readGeneratedCodeFromFirebase()
-
         // check if the user created a room
         checkIfActive()
 
@@ -49,8 +48,6 @@ class HomeActivity : AppCompatActivity() {
         btnCreate.setOnClickListener {
             if (activeRoom){
                 val i = Intent(this, HostRoomActivity::class.java)
-                // send code
-                val code = getCodeFromLists()
                 i.putExtra("code", code)
                 startActivity(i)
             } else {
@@ -67,22 +64,34 @@ class HomeActivity : AppCompatActivity() {
 
     }
 
-    private fun getCodeFromLists(): String? {
+    private fun getCodeFromDatabase() {
 
-        for (codes in codeLists){
-            if (codes.user == email){
-                return codes.code
-            }
-        }
-        return ""
+        fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid)
+            .addValueEventListener(object : ValueEventListener{
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (postSnapshot in snapshot.children){
+                        val x = postSnapshot.getValue(Host::class.java)
+                        code = x?.code.toString()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+
+                }
+
+            })
 
     }
 
+
+    // ichecheck lang yung database kung null o hindi yung node with uid ng user
     private fun checkIfActive() {
         fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid).addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (postSnapshot in snapshot.children){
                     activeRoom = postSnapshot.getValue(String::class.java) != null
+                    btnJoin.isEnabled = !activeRoom
+                    getCodeFromDatabase()
                 }
                 loadingDialog.stop()
             }
@@ -94,24 +103,6 @@ class HomeActivity : AppCompatActivity() {
         })
     }
 
-    private fun readGeneratedCodeFromFirebase() {
-        fDbRef.child("generated_codes").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for (postSnapshot in snapshot.children){
-                    val userAndCode = postSnapshot.getValue(Host::class.java)
-                    codeLists.add(userAndCode!!)
-                }
-                for (x in codeLists){
-                    Log.d(TAG, x.code + x.user)
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-
-            }
-
-        })
-    }
 
     private fun showEnterCodeDialogBox() {
 
