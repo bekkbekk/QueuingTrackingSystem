@@ -7,6 +7,7 @@ import android.text.Html
 import android.util.Log
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
@@ -67,37 +68,7 @@ class HostRoomActivity : AppCompatActivity() {
         btnLeave.setOnClickListener {
             // confirm dialog muna dapat
 
-            loadingDialog.start()
-
-            fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid).removeValue()
-                .addOnCompleteListener { task ->
-
-                    if (task.isSuccessful) {
-                        fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid).removeValue()
-                            .addOnSuccessListener {
-
-                                fDbRef.child("active_codes").child(fAuth.currentUser!!.uid).removeValue()
-                                    .addOnSuccessListener {
-
-                                        // exit room and go back to home
-                                        val i = Intent(this, HomeActivity::class.java)
-                                        loadingDialog.stop()
-                                        finish()
-                                        startActivity(i)
-
-                                    }
-
-                            }.addOnFailureListener {
-                            loadingDialog.stop()
-                            Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
-                        }
-
-                    } else {
-                        loadingDialog.stop()
-                        Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
-                    }
-
-                }
+            confirmLeaveDialogBox()
 
 
         }
@@ -108,6 +79,55 @@ class HostRoomActivity : AppCompatActivity() {
             startActivity(i)
         }
 
+    }
+
+    private fun confirmLeaveDialogBox() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("End")
+            .setMessage("Are you sure you want to leave and end this room?")
+            .setCancelable(false)
+            .setPositiveButton("Yes") { dialog, which ->
+
+                deleteRecord()
+
+            }
+            .setNegativeButton("No") { dialog, which ->
+
+            }
+            .show()
+    }
+
+    private fun deleteRecord() {
+        loadingDialog.start()
+
+        fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid).removeValue()
+            .addOnCompleteListener { task ->
+
+                if (task.isSuccessful) {
+                    fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid).removeValue()
+                        .addOnSuccessListener {
+
+                            fDbRef.child("active_codes").child(fAuth.currentUser!!.uid).removeValue()
+                                .addOnSuccessListener {
+
+                                    val i = Intent(this, HomeActivity::class.java)
+                                    loadingDialog.stop()
+                                    finish()
+                                    startActivity(i)
+
+                                }
+
+                        }.addOnFailureListener {
+                            loadingDialog.stop()
+                            Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
+                        }
+
+                } else {
+                    loadingDialog.stop()
+                    Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
+                }
+
+            }
     }
 
     private fun updateList() {
