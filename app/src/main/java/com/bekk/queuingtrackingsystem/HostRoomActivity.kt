@@ -18,10 +18,10 @@ class HostRoomActivity : AppCompatActivity() {
 
     lateinit var customerList: MutableList<Int>
 
-    private lateinit var fDbRef : DatabaseReference
-    private lateinit var fAuth : FirebaseAuth
-    private lateinit var email : String
-    private lateinit var code : String
+    private lateinit var fDbRef: DatabaseReference
+    private lateinit var fAuth: FirebaseAuth
+    private lateinit var email: String
+    private lateinit var code: String
     private lateinit var qrCode: QRCode
     private lateinit var loadingDialog: LoadingDialogCircle
 
@@ -64,33 +64,40 @@ class HostRoomActivity : AppCompatActivity() {
 
         }
 
-        btnLeave.setOnClickListener{
+        btnLeave.setOnClickListener {
             // confirm dialog muna dapat
 
             loadingDialog.start()
 
-            fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid).removeValue().addOnCompleteListener{ task ->
+            fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid).removeValue()
+                .addOnCompleteListener { task ->
 
-                if (task.isSuccessful){
-                    fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid).removeValue().addOnSuccessListener {
+                    if (task.isSuccessful) {
+                        fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid).removeValue()
+                            .addOnSuccessListener {
 
-                        // exit room and go back to home
-                        val i = Intent(this, HomeActivity::class.java)
-                        loadingDialog.stop()
-                        finish()
-                        startActivity(i)
+                                fDbRef.child("active_codes").child(fAuth.currentUser!!.uid).removeValue()
+                                    .addOnSuccessListener {
 
-                    }.addOnFailureListener{
+                                        // exit room and go back to home
+                                        val i = Intent(this, HomeActivity::class.java)
+                                        loadingDialog.stop()
+                                        finish()
+                                        startActivity(i)
+
+                                    }
+
+                            }.addOnFailureListener {
+                            loadingDialog.stop()
+                            Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
+                        }
+
+                    } else {
                         loadingDialog.stop()
                         Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
                     }
 
-                } else {
-                    loadingDialog.stop()
-                    Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
                 }
-
-            }
 
 
         }
