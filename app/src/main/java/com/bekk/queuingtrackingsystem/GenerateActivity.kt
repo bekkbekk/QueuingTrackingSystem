@@ -18,7 +18,6 @@ import com.google.zxing.WriterException
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.android.synthetic.main.activity_generate.*
 import java.lang.Math.abs
-import java.lang.RuntimeException
 
 class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
 
@@ -28,7 +27,7 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
     private lateinit var fDbRef: DatabaseReference
     private lateinit var fAuth: FirebaseAuth
     private lateinit var email: String
-    private lateinit var loadingDialog: LoadingDialogCircle
+    private lateinit var loadingDialogCircle: LoadingDialogCircle
     private lateinit var loadingDialogHorizontal: LoadingDialog
     private lateinit var takenCodeLists: ArrayList<String?>
 
@@ -57,11 +56,11 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
         fAuth = FirebaseAuth.getInstance()
         email = fAuth.currentUser?.email.toString()
         qrCode = QRCode(this)
-        loadingDialog = LoadingDialogCircle(this)
+        loadingDialogCircle = LoadingDialogCircle(this)
         loadingDialogHorizontal = LoadingDialog(this)
 
         takenCodeLists = ArrayList()
-        loadingDialogHorizontal.start()
+        loadingDialogHorizontal.start("Updating data...")
         getActiveCodesFromDatabase()
 
 
@@ -77,16 +76,6 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
             }
 
             code = etTextCode.text.toString().trim()
-
-            if (takenCodeLists.contains(code)) {
-                etTextCode.error = "A room is active with this code."
-                etTextCode.requestFocus()
-                return@setOnClickListener
-            } else {
-                // posibleng pagkapindot ng una ay meron tas biglang delete room
-                // so pagka pindot ulit ay pede na mag generate so alsin na si eror
-                etTextCode.error = null
-            }
 
             qrCode.generateImage(ivQrCode, tvLabel, tvCode, code!!)
             hideKeyboard()
@@ -194,7 +183,17 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
                             Toast.makeText(this, "Enter code first", Toast.LENGTH_SHORT).show()
                         } else {
 
-                            loadingDialog.start()
+                            if (takenCodeLists.contains(code)) {
+                                etTextCode.error = "A room is active with this code."
+                                etTextCode.requestFocus()
+                                return false
+                            } else {
+                                // posibleng pagkapindot ng una ay meron tas biglang delete room
+                                // so pagka pindot ulit ay pede na mag generate so alsin na si eror
+                                etTextCode.error = null
+                            }
+
+                            loadingDialogCircle.start()
                             btnGenerate.isEnabled = false
                             val i = Intent(this, HostRoomActivity::class.java)
                             i.putExtra("code", code)
@@ -207,7 +206,7 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
                                 .setValue(code!!)
                             fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid)
                                 .push().setValue(email).addOnCompleteListener {
-                                    loadingDialog.stop()
+                                    loadingDialogCircle.stop()
                                 }
 
                         }
