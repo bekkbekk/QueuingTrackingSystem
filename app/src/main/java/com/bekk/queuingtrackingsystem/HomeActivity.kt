@@ -4,7 +4,6 @@ import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -17,13 +16,14 @@ class HomeActivity : AppCompatActivity() {
     val TAG = "HomeActivity"
 
     private lateinit var fDbRef: DatabaseReference
-    private lateinit var fAuth : FirebaseAuth
+    private lateinit var fAuth: FirebaseAuth
     private lateinit var toCustomerActivity: Intent
-    private lateinit var codeLists : ArrayList<Host>
-    private lateinit var email : String
-    private lateinit var loadingDialog : LoadingDialog
+    private lateinit var codeLists: ArrayList<Host>
+    private lateinit var email: String
+    private lateinit var loadingDialogHorizontal: LoadingDialogHorizontal
     private var activeRoom = false
-    private lateinit var code : String
+    private lateinit var code: String
+    private lateinit var activeCodes: ArrayList<String?>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,16 +37,20 @@ class HomeActivity : AppCompatActivity() {
         toCustomerActivity = Intent(this, CustomerActivity::class.java)
         codeLists = ArrayList()
         email = fAuth.currentUser?.email.toString()
-        loadingDialog = LoadingDialog(this)
+        loadingDialogHorizontal = LoadingDialogHorizontal(this)
+        activeCodes = ArrayList()
 
-        loadingDialog.start()
+        loadingDialogHorizontal.start()
 
         // check if the user created a room
         checkIfActive()
 
+        //get lists of active codes
+        getActivecodes()
+
 
         btnCreate.setOnClickListener {
-            if (activeRoom){
+            if (activeRoom) {
                 val i = Intent(this, HostRoomActivity::class.java)
                 i.putExtra("code", code)
                 startActivity(i)
@@ -64,12 +68,29 @@ class HomeActivity : AppCompatActivity() {
 
     }
 
+    private fun getActivecodes() {
+        fDbRef.child("active_codes").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                activeCodes.clear()
+                for (postSnapshot in snapshot.children) {
+                    activeCodes.add(postSnapshot.getValue(String::class.java))
+                }
+                loadingDialogHorizontal.stop()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+        })
+    }
+
     private fun getCodeFromDatabase() {
 
         fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid)
-            .addValueEventListener(object : ValueEventListener{
+            .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    for (postSnapshot in snapshot.children){
+                    for (postSnapshot in snapshot.children) {
                         val x = postSnapshot.getValue(Host::class.java)
                         code = x?.code.toString()
                     }
@@ -86,21 +107,22 @@ class HomeActivity : AppCompatActivity() {
 
     // ichecheck lang yung database kung null o hindi yung node with uid ng user
     private fun checkIfActive() {
-        fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid).addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for (postSnapshot in snapshot.children){
-                    activeRoom = postSnapshot.getValue(String::class.java) != null
-                    btnJoin.isEnabled = !activeRoom
-                    getCodeFromDatabase()
+        fDbRef.child("active_hosts").child(fAuth.currentUser!!.uid)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (postSnapshot in snapshot.children) {
+                        activeRoom = postSnapshot.getValue(String::class.java) != null
+                        btnJoin.isEnabled = !activeRoom
+                        getCodeFromDatabase()
+                    }
+                    // loadingDialog.stop()
                 }
-                loadingDialog.stop()
-            }
 
-            override fun onCancelled(error: DatabaseError) {
+                override fun onCancelled(error: DatabaseError) {
 
-            }
+                }
 
-        })
+            })
     }
 
 
@@ -110,21 +132,31 @@ class HomeActivity : AppCompatActivity() {
         updateDialog.setCancelable(true)
         updateDialog.setContentView(R.layout.dialog_enter_code)
 
-        val etEnterCode : EditText = updateDialog.findViewById(R.id.etEnterCode)
-        val btnEnterRoom : Button = updateDialog.findViewById(R.id.btnEnterRoom)
-        val btnScanCode : Button = updateDialog.findViewById(R.id.btnScanCode)
+        val etEnterCode: EditText = updateDialog.findViewById(R.id.etEnterCode)
+        val btnEnterRoom: Button = updateDialog.findViewById(R.id.btnEnterRoom)
+        val btnScanCode: Button = updateDialog.findViewById(R.id.btnScanCode)
 
         btnEnterRoom.setOnClickListener {
 
             val code = etEnterCode.text.toString().trim()
 
-            if (code.isEmpty()){
+            if (code.isEmpty()) {
                 etEnterCode.error = "Empty"
                 etEnterCode.requestFocus()
                 return@setOnClickListener
             }
 
-            checkCodeToEnter(code)
+            if (activeCodes.contains(code)) {
+
+                // open room after yeah
+                val i = Intent(this, CustomerActivity::class.java)
+                i.putExtra("code", code)
+                finish()
+                startActivity(i)
+
+            } else {
+                Toast.makeText(this, "No such room exists", Toast.LENGTH_SHORT).show()
+            }
 
 
         }
@@ -133,30 +165,12 @@ class HomeActivity : AppCompatActivity() {
 
             // scan qr code then returns string na masstore sa variable
 
-            checkCodeToEnter("CODE_VARIABLE")
 
         }
-
-
-
-
-
-
 
 
         updateDialog.show()
 
     }
 
-    private fun checkCodeToEnter(code : String) {
-
-        val codeStrings : ArrayList<String> = ArrayList()
-
-        if (codeStrings.contains(code)){
-            toCustomerActivity.putExtra("code", code)
-            startActivity(toCustomerActivity)
-        } else {
-            Toast.makeText(this, "No such room exists", Toast.LENGTH_SHORT).show()
-        }
-    }
 }

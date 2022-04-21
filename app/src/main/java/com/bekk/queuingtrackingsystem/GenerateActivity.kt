@@ -28,7 +28,7 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
     private lateinit var fAuth: FirebaseAuth
     private lateinit var email: String
     private lateinit var loadingDialogCircle: LoadingDialogCircle
-    private lateinit var loadingDialogHorizontal: LoadingDialog
+    private lateinit var loadingDialogHorizontalHorizontal: LoadingDialogHorizontal
     private lateinit var takenCodeLists: ArrayList<String?>
 
     private lateinit var qrCode: QRCode
@@ -57,10 +57,10 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
         email = fAuth.currentUser?.email.toString()
         qrCode = QRCode(this)
         loadingDialogCircle = LoadingDialogCircle(this)
-        loadingDialogHorizontal = LoadingDialog(this)
+        loadingDialogHorizontalHorizontal = LoadingDialogHorizontal(this)
 
         takenCodeLists = ArrayList()
-        loadingDialogHorizontal.start("Updating data...")
+        loadingDialogHorizontalHorizontal.start("Updating data...")
         getActiveCodesFromDatabase()
 
 
@@ -92,7 +92,7 @@ class GenerateActivity : AppCompatActivity(), GestureDetector.OnGestureListener 
                 for (postSnapshot in snapshot.children) {
                     takenCodeLists.add(postSnapshot.getValue(String::class.java))
                 }
-                loadingDialogHorizontal.stop()
+                loadingDialogHorizontalHorizontal.stop()
             }
 
             override fun onCancelled(error: DatabaseError) {

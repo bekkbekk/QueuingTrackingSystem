@@ -5,7 +5,7 @@ import android.app.Dialog
 import kotlinx.android.synthetic.main.dialog_loading_screen.*
 import kotlinx.android.synthetic.main.dialog_loading_screen_circle.*
 
-class LoadingDialog (val context : Activity) {
+class LoadingDialogHorizontal (val context : Activity) {
 
     private lateinit var loadingDialogBox : Dialog
 

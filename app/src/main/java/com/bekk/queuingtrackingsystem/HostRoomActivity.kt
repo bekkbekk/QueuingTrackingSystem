@@ -9,22 +9,23 @@ import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.activity_host_room.*
 
 class HostRoomActivity : AppCompatActivity() {
 
     private val TAG = "HostRoomActivity"
 
-    lateinit var customerList: MutableList<Int>
+    lateinit var customerList: ArrayList<String>
 
     private lateinit var fDbRef: DatabaseReference
     private lateinit var fAuth: FirebaseAuth
     private lateinit var email: String
     private lateinit var code: String
     private lateinit var qrCode: QRCode
-    private lateinit var loadingDialog: LoadingDialogCircle
+    private lateinit var loadingDialogCircle: LoadingDialogCircle
+    private lateinit var loadingDialogHorizontal: LoadingDialogHorizontal
+    private lateinit var uidDialog: UIDDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +38,12 @@ class HostRoomActivity : AppCompatActivity() {
         fDbRef = FirebaseDatabase.getInstance().reference
         fAuth = FirebaseAuth.getInstance()
         qrCode = QRCode(this)
-        loadingDialog = LoadingDialogCircle(this)
+        loadingDialogCircle = LoadingDialogCircle(this)
+        loadingDialogHorizontal = LoadingDialogHorizontal(this)
+        customerList = ArrayList()
+        uidDialog = UIDDialog(this)
+
+        loadingDialogHorizontal.start()
 
 
         code = intent.getStringExtra("code").toString()
@@ -45,17 +51,21 @@ class HostRoomActivity : AppCompatActivity() {
 
         email = fAuth.currentUser?.email.toString()
 
-        customerList = mutableListOf(412, 346, 57, 5, 457, 865, 867)
+        getCustomerListFromDatabase()
 
-        updateList()
-        setUpRecyclerView()
+        // customerList = mutableListOf(412, 346, 57, 5, 457, 865, 867)
+
+//        updateList()
+//        setUpRecyclerView()
+
+        // ------------------------------ onClickListeners ------------------------------------
 
         btnNext.setOnClickListener {
             try {
                 updateList()
                 setUpRecyclerView()
             } catch (e: IndexOutOfBoundsException) {
-                Toast.makeText(this, "No moe next in line", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "No more next in line", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -79,6 +89,30 @@ class HostRoomActivity : AppCompatActivity() {
             startActivity(i)
         }
 
+        cardView.setOnClickListener {
+            uidDialog.show(tvNumberTurn.text.toString())
+        }
+
+        // --------------------------end of onClickListeners ---------------------------
+
+    }
+
+    private fun getCustomerListFromDatabase() {
+        fDbRef.child("active_rooms").child(code).addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                customerList.clear()
+                for (postSnapshot in snapshot.children){
+                    customerList.add(postSnapshot.value as String)
+                }
+                setUpRecyclerView()
+                loadingDialogHorizontal.stop()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+        })
     }
 
     private fun confirmLeaveDialogBox() {
@@ -98,7 +132,7 @@ class HostRoomActivity : AppCompatActivity() {
     }
 
     private fun deleteRecord() {
-        loadingDialog.start()
+        loadingDialogCircle.start()
 
         fDbRef.child("generated_codes").child(fAuth.currentUser!!.uid).removeValue()
             .addOnCompleteListener { task ->
@@ -111,19 +145,19 @@ class HostRoomActivity : AppCompatActivity() {
                                 .addOnSuccessListener {
 
                                     val i = Intent(this, HomeActivity::class.java)
-                                    loadingDialog.stop()
+                                    loadingDialogCircle.stop()
                                     finish()
                                     startActivity(i)
 
                                 }
 
                         }.addOnFailureListener {
-                            loadingDialog.stop()
+                            loadingDialogCircle.stop()
                             Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
                         }
 
                 } else {
-                    loadingDialog.stop()
+                    loadingDialogCircle.stop()
                     Toast.makeText(this, "Error.", Toast.LENGTH_SHORT).show()
                 }
 

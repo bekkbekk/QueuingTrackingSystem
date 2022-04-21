@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class CustomerAdapter(
-    val customerList : MutableList<Int>
+    val customerList : ArrayList<String>
 ) : RecyclerView.Adapter<CustomerAdapter.MyViewHolder>() {
 
     class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
